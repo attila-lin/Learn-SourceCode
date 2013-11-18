@@ -222,7 +222,7 @@ void init(void)
 	setup((void *) &drive_info);
 
 	// 用只读方式打开 /dev/tty0：终端控制台 
-	(void) open("/dev/tty0",O_RDWR,0);	// open in "fcntl.h"
+	(void) open("/dev/tty0",O_RDWR,0);
 	(void) dup(0);
 	(void) dup(0);
 	printf("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
