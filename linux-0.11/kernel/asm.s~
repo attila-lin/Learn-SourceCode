@@ -117,8 +117,6 @@ _irq13:
 	popl %eax
 	jmp _coprocessor_error
 
-// 以下中断在调用时CPU会在中断返回地址之后将出错号压入堆栈，因此返回时将出错号弹出
-
 // int8
 _double_fault:
 	pushl $_do_double_fault

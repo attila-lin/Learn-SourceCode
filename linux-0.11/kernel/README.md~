@@ -25,13 +25,13 @@ asm.s & traps.c
 **另外一些硬件中断处理在 system_call.s 和 mm/page.s 中** 
 
 ### 3.系统调用处理相关程序
+
 Linux中应用程序调用内核的功能是通过中断调用int0X80进行的，eax放调用号，如果有参数，放置在ebx，ecx，edx。被称为系统调用。
 
 system_call.s fork.c signal.c sys.c exit.c
 
 #### 1) system_call.s
 类似硬件中断处理中的asm.s的作用，另外还对时钟中断和硬盘，软盘中断进行处理。
-
 #### 2) fork.c & signal.c
 类似traps.c的作用，为系统中断提供C处理函数
 **fork.c**: 提供两个C处理函数：find_empty_process(), copy_process()

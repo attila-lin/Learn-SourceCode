@@ -166,13 +166,13 @@ void main(void)		/* This really IS void, no error here. */
 #ifdef RAMDISK
 	main_memory_start += rd_init(main_memory_start, RAMDISK*1024);
 #endif
-	mem_init(main_memory_start,memory_end);
-	trap_init();
-	blk_dev_init();
+	mem_init(main_memory_start,memory_end);		// mm/memory.c 		主存区初始化
+	trap_init();								// kernel/traps.c 	设置硬件中断向量
+	blk_dev_init();								
 	chr_dev_init();
 	tty_init();
 	time_init();
-	sched_init();
+	sched_init();								// kernel/sched.c
 	buffer_init(buffer_memory_end);
 	hd_init();
 	floppy_init();

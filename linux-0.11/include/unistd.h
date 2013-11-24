@@ -56,7 +56,7 @@
 #include <utime.h>
 
 #ifdef __LIBRARY__
-
+// 系统调用功能号
 #define __NR_setup	0	/* used only by init, to get system going */
 #define __NR_exit	1
 #define __NR_fork	2
