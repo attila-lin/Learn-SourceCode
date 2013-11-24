@@ -100,9 +100,9 @@ extern long startup_time;
  * clock I'd be interested. Most of this was trial and error, and some
  * bios-listing reading. Urghh.
  */
-// CMOS_READ(0);CMOS_READ(2); to read the real time 内嵌汇编
+// CMOS_READ(0);CMOS_READ(2); to read the real time 内嵌汇编, BCD的
 #define CMOS_READ(addr) ({ \
-outb_p(0x80|addr,0x70); \
+outb_p(0x80|addr,0x70); \  // 和 0x80与 没意义
 inb_p(0x71); \
 })
 
@@ -221,31 +221,37 @@ void init(void)
 
 	setup((void *) &drive_info);
 
-	// 用只读方式打开 /dev/tty0：终端控制台 
-	(void) open("/dev/tty0",O_RDWR,0);	// open in "fcntl.h"
-	(void) dup(0);
-	(void) dup(0);
+	// 用只读方式打开 /dev/tty0：终端控制台 第一次打开文件
+	(void) open("/dev/tty0",O_RDWR,0);	// open in "fcntl.h" 文件描述符为0 回忆CTRL-ALT-F1
+	(void) dup(0); 	// 复制句柄0 stdout 变为句柄1 
+	(void) dup(0);	// 复制句柄0 stderr 变为句柄2
 	printf("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
 		NR_BUFFERS*BLOCK_SIZE);
 	printf("Free mem: %d bytes\n\r",memory_end-main_memory_start);
-	if (!(pid=fork())) {
-		close(0);
-		if (open("/etc/rc",O_RDONLY,0))
-			_exit(1);
-		execve("/bin/sh",argv_rc,envp_rc);
-		_exit(2);
+
+	// 创建任务2：这里的sh是非交互式的执行完rc后就立即退出，进程2结束
+	if (!(pid=fork())) {		// fork()在子进程为0 在父进程中为子进程的标识号pid
+		close(0);		// 关闭句柄0 即stdin
+		if (open("/etc/rc",O_RDONLY,0))	// 用只读方式打开 /etc/rc， 以上两步目的是stdin重定向到/etc/rc, 就可以让/bin/sh运行rc中指令了
+			_exit(1);		// 文件打开失败则退出   操作未许可  lib/_exit.c  
+		execve("/bin/sh",argv_rc,envp_rc);	// fs.exec.c 
+		_exit(2);			// execve()失败则退出   文件或目录不存在
 	}
-	if (pid>0)
-		while (pid != wait(&i))
+	// 父进程执行的语句
+	if (pid>0)	
+		while (pid != wait(&i))	// &i 存放返回状态信息的位置 如果wait()返回值不等于子进程号就等待
 			/* nothing */;
+		
+
+
 	while (1) {
 		if ((pid=fork())<0) {
 			printf("Fork failed in init\r\n");
 			continue;
 		}
-		if (!pid) {
+		if (!pid) {			// 新的子进程
 			close(0);close(1);close(2);
-			setsid();
+			setsid();		// 创建新的会话期
 			(void) open("/dev/tty0",O_RDWR,0);
 			(void) dup(0);
 			(void) dup(0);
@@ -255,7 +261,11 @@ void init(void)
 			if (pid == wait(&i))
 				break;
 		printf("\n\rchild %d died with code %04x\n\r",pid,i);
-		sync();
+		sync();			// 同步操作，刷新缓冲区
 	}
 	_exit(0);	/* NOTE! _exit, not exit() */
+	// exit() 和 _exit() 都是正常终止一个函数
+	// _exit()是sys_exit系统调用
+	// 但 exit() 是普通函数库里的一个函数，有一些清除工作：调用执行各终止处理程序，关闭所有标准IO
+	// 然后调用sys_exit
 }
