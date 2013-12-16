@@ -52,7 +52,7 @@ long kernel_mktime(struct tm * tm)
 	res = YEAR*year + DAY*((year+1)/4);
 	res += month[tm->tm_mon];
 /* and (y+2) here. If it wasn't a leap-year, we have to adjust */
-	if (tm->tm_mon>1 && ((year+2)%4))	// 1972是闰年
+	if (tm->tm_mon>1 && ((year+2)%4))
 		res -= DAY;
 	res += DAY*(tm->tm_mday-1);
 	res += HOUR*tm->tm_hour;

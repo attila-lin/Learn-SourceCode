@@ -38,7 +38,7 @@ void show_stat(void)
 {
 	int i;
 
-	for (i=0;i<NR_TASKS;i++)	// #define NR_TASKS 64
+	for (i=0;i<NR_TASKS;i++)
 		if (task[i])
 			show_task(i,task[i]);
 }
