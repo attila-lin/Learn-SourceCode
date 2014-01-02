@@ -205,7 +205,7 @@ repeat:
 				continue;
 		}
 	}
-	if (flag) { // 说明找到过
+	if (flag) {
 		if (options & WNOHANG)
 			return 0;
 		current->state=TASK_INTERRUPTIBLE;
