@@ -13,6 +13,7 @@ Learn Source Code
 	+ sched.c 
 	+ signal.c
 	+ exit.c
+	+ fork.c
 + 部分include中.h
 
 To be continued
@@ -30,3 +31,15 @@ To be continued
 已阅读函数：
 + strlen
 + strcpy
+
+## 3. 阅读coreutils源码
+shell指令
+已读
++ cd
++ cat
++ cp
+
+了解 .1 
+man
+
+## 4. 阅读lua源码
