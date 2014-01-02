@@ -15,7 +15,7 @@
 
 int sys_ftime()
 {
-	return -ENOSYS;
+	return -ENOSYS; // 还没实现
 }
 
 int sys_break()
@@ -48,6 +48,7 @@ int sys_prof()
 	return -ENOSYS;
 }
 
+// 设置当前任务的实际有效组ID。gid
 int sys_setregid(int rgid, int egid)
 {
 	if (rgid>0) {
@@ -69,11 +70,13 @@ int sys_setregid(int rgid, int egid)
 	return 0;
 }
 
+// 设置进程组号
 int sys_setgid(int gid)
 {
 	return(sys_setregid(gid, gid));
 }
 
+// 打开或关闭进程记账功能
 int sys_acct()
 {
 	return -ENOSYS;
@@ -98,15 +101,15 @@ int sys_ulimit()
 {
 	return -ENOSYS;
 }
-
+// 返回1970.1.1：0：0：0
 int sys_time(long * tloc)
 {
 	int i;
 
 	i = CURRENT_TIME;
 	if (tloc) {
-		verify_area(tloc,4);
-		put_fs_long(i,(unsigned long *)tloc);
+		verify_area(tloc,4);// 验证内存容量是否足够
+		put_fs_long(i,(unsigned long *)tloc);	// 放入用户数据段tloc
 	}
 	return i;
 }
@@ -115,6 +118,7 @@ int sys_time(long * tloc)
  * Unprivileged users may change the real user id to the effective uid
  * or vice versa.
  */
+ // 设置任务的实际用户ID（uid） 类似上面
 int sys_setreuid(int ruid, int euid)
 {
 	int old_ruid = current->uid;
@@ -145,6 +149,7 @@ int sys_setuid(int uid)
 	return(sys_setreuid(uid, uid));
 }
 
+// 设置系统开机时间
 int sys_stime(long * tptr)
 {
 	if (!suser())
@@ -153,6 +158,8 @@ int sys_stime(long * tptr)
 	return 0;
 }
 
+// 获取当前任务运行时间统计
+// 在tms中
 int sys_times(struct tms * tbuf)
 {
 	if (tbuf) {
@@ -226,7 +233,7 @@ int sys_uname(struct utsname * name)
 		put_fs_byte(((char *) &thisname)[i],i+(char *) name);
 	return 0;
 }
-
+// 设置当前进程创建文件属性屏蔽码为mask & 0777
 int sys_umask(int mask)
 {
 	int old = current->umask;
