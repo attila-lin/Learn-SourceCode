@@ -201,7 +201,7 @@ _device_not_available:
 // int32 --- (int 0x20)时钟中断处理程序，中断频率被设置为100Hz（include/linux/sched.h）
 // #define HZ 100， 定时芯片在kernel/sched.c被初始化
 // jiffies每10毫秒加1
-// 这段
+// 
 .align 2
 _timer_interrupt:
 	push %ds		# save ds,es and put kernel data space
