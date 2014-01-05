@@ -15,6 +15,8 @@ Learn Source Code
 	+ exit.c
 	+ fork.c
 	+ sys.c
+	+ printk.c
+	+ panic.c
 + 部分include中.h
 
 To be continued

@@ -30,6 +30,8 @@
  * abund.
  */
 
+// 软盘控制器驱动程序
+
 #include <linux/sched.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>

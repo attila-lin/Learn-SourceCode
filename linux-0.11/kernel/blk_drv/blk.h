@@ -1,7 +1,10 @@
+// 有关硬盘块设备参数的头文件
+// 只用于块设备
+
 #ifndef _BLK_H
 #define _BLK_H
 
-#define NR_BLK_DEV	7
+#define NR_BLK_DEV	7	// 块设备数量
 /*
  * NR_REQUEST is the number of entries in the request-queue.
  * NOTE that writes may use only the low 2/3 of these: reads
@@ -12,6 +15,8 @@
  * buffers when they are in the queue. 64 seems to be too many (easily
  * long pauses in reading when heavy writing/syncing is going on)
  */
+ // NR_REQUEST是请求队列的所包含的项数
+ // 电梯算法
 #define NR_REQUEST	32
 
 /*
@@ -21,15 +26,15 @@
  * read/write completion.
  */
 struct request {
-	int dev;		/* -1 if no request */
-	int cmd;		/* READ or WRITE */
-	int errors;
-	unsigned long sector;
-	unsigned long nr_sectors;
-	char * buffer;
-	struct task_struct * waiting;
-	struct buffer_head * bh;
-	struct request * next;
+	int dev;		/* -1 if no request */  // 发请求的设备号
+	int cmd;		/* READ or WRITE */		// READ 或者 WRITE
+	int errors;		// 操作产生错误次数
+	unsigned long sector;	// 起始扇区（1块 = 2扇区）
+	unsigned long nr_sectors;	// 读/写扇区数
+	char * buffer;	// 数据缓存区
+	struct task_struct * waiting;	// 任务等待操作执行完成的地方
+	struct buffer_head * bh;		// 缓冲区头指针
+	struct request * next;			// 指向下一个请求项
 };
 
 /*
@@ -37,28 +42,30 @@ struct request {
  * reads always go before writes. This is natural: reads
  * are much more time-critical than writes.
  */
+ // 电梯算法
 #define IN_ORDER(s1,s2) \
 ((s1)->cmd<(s2)->cmd || (s1)->cmd==(s2)->cmd && \
 ((s1)->dev < (s2)->dev || ((s1)->dev == (s2)->dev && \
 (s1)->sector < (s2)->sector)))
 
+// 块设备结构
 struct blk_dev_struct {
 	void (*request_fn)(void);
 	struct request * current_request;
 };
 
-extern struct blk_dev_struct blk_dev[NR_BLK_DEV];
-extern struct request request[NR_REQUEST];
-extern struct task_struct * wait_for_request;
+extern struct blk_dev_struct blk_dev[NR_BLK_DEV]; // 块设备表
+extern struct request request[NR_REQUEST];	// 请求项队列数组
+extern struct task_struct * wait_for_request;	// 等待空闲请求项的进程队列头指针
 
-#ifdef MAJOR_NR
+#ifdef MAJOR_NR	// 主设备号
 
 /*
  * Add entries as needed. Currently the only block devices
  * supported are hard-disks and floppies.
  */
 
-#if (MAJOR_NR == 1)
+#if (MAJOR_NR == 1)	// RAM盘的主设备号是1
 /* ram disk */
 #define DEVICE_NAME "ramdisk"
 #define DEVICE_REQUEST do_rd_request
@@ -66,7 +73,7 @@ extern struct task_struct * wait_for_request;
 #define DEVICE_ON(device) 
 #define DEVICE_OFF(device)
 
-#elif (MAJOR_NR == 2)
+#elif (MAJOR_NR == 2)	// 软驱
 /* floppy */
 #define DEVICE_NAME "floppy"
 #define DEVICE_INTR do_floppy
@@ -75,7 +82,7 @@ extern struct task_struct * wait_for_request;
 #define DEVICE_ON(device) floppy_on(DEVICE_NR(device))
 #define DEVICE_OFF(device) floppy_off(DEVICE_NR(device))
 
-#elif (MAJOR_NR == 3)
+#elif (MAJOR_NR == 3)	// 硬盘
 /* harddisk */
 #define DEVICE_NAME "harddisk"
 #define DEVICE_INTR do_hd
@@ -84,7 +91,7 @@ extern struct task_struct * wait_for_request;
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
-#elif
+#elif // 未知
 /* unknown blk device */
 #error "unknown blk device"
 

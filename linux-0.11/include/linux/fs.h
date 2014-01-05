@@ -33,8 +33,8 @@ void buffer_init(long buffer_end);
 #define MAJOR(a) (((unsigned)(a))>>8)
 #define MINOR(a) ((a)&0xff)
 
-#define NAME_LEN 14
-#define ROOT_INO 1
+#define NAME_LEN 14	// 名字长度
+#define ROOT_INO 1	// 根i节点
 
 #define I_MAP_SLOTS 8
 #define Z_MAP_SLOTS 8
@@ -122,25 +122,27 @@ struct file {
 };
 
 struct super_block {
-	unsigned short s_ninodes;
-	unsigned short s_nzones;
-	unsigned short s_imap_blocks;
-	unsigned short s_zmap_blocks;
-	unsigned short s_firstdatazone;
-	unsigned short s_log_zone_size;
-	unsigned long s_max_size;
-	unsigned short s_magic;
+	// 出现在盘上和内存中的字段
+	unsigned short s_ninodes;	// i节点数
+	unsigned short s_nzones;	// 逻辑块数（区块数）
+	unsigned short s_imap_blocks;	// i节点位图所占块数
+	unsigned short s_zmap_blocks;	// 逻辑块位图所占数
+	unsigned short s_firstdatazone;	// 数据区中第一个逻辑块块号
+	unsigned short s_log_zone_size;	// LOG（磁盘块数/逻辑块）
+	unsigned long s_max_size;	// 最大文件长度
+	unsigned short s_magic;		// 文件系统幻数 ？？起始一直不知道幻数是什么？ 用来让大家不了解这个数字是干什么的么？
 /* These are only in memory */
-	struct buffer_head * s_imap[8];
-	struct buffer_head * s_zmap[8];
-	unsigned short s_dev;
-	struct m_inode * s_isup;
-	struct m_inode * s_imount;
-	unsigned long s_time;
-	struct task_struct * s_wait;
-	unsigned char s_lock;
-	unsigned char s_rd_only;
-	unsigned char s_dirt;
+	// 仅存在在内存中使用的字段
+	struct buffer_head * s_imap[8];	// i节点位图在高速缓冲块指针数组
+	struct buffer_head * s_zmap[8];	// 逻辑块位图在高速缓冲块指针数组
+	unsigned short s_dev;	// 超级块所在设备号
+	struct m_inode * s_isup;	// 被安装文件系统根目录i节点
+	struct m_inode * s_imount;	// 该文件系统被安装到i节点
+	unsigned long s_time;		// 修改时间
+	struct task_struct * s_wait;// 等待本超级块的进程指针
+	unsigned char s_lock;		// 锁定标志
+	unsigned char s_rd_only;	// 只读标志
+	unsigned char s_dirt;		// 已被修改（脏）标志
 };
 
 struct d_super_block {
@@ -153,15 +155,15 @@ struct d_super_block {
 	unsigned long s_max_size;
 	unsigned short s_magic;
 };
-
+// 文件目录项结构
 struct dir_entry {
-	unsigned short inode;
-	char name[NAME_LEN];
+	unsigned short inode;	// i节点号
+	char name[NAME_LEN];	// 文件名
 };
 
 extern struct m_inode inode_table[NR_INODE];
 extern struct file file_table[NR_FILE];
-extern struct super_block super_block[NR_SUPER];
+extern struct super_block super_block[NR_SUPER]; // 8个超级块
 extern struct buffer_head * start_buffer;
 extern int nr_buffers;
 

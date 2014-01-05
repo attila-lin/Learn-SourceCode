@@ -12,6 +12,8 @@
  * 
  *  modified by Drew Eckhardt to check nr of hd's from the CMOS.
  */
+// 硬盘控制器驱动程序
+// 提供对硬盘控制器块设备的读写驱动和硬盘初始化处理
 
 #include <linux/config.h>
 #include <linux/sched.h>
@@ -25,9 +27,10 @@
 #define MAJOR_NR 3
 #include "blk.h"
 
+// CMOS参数读取宏函数
 #define CMOS_READ(addr) ({ \
-outb_p(0x80|addr,0x70); \
-inb_p(0x71); \
+outb_p(0x80|addr,0x70); \ 	// 0x70是写端口号
+inb_p(0x71); \				// 0x71是读端口号
 })
 
 /* Max read/write errors/sector */
@@ -42,7 +45,9 @@ static int reset = 1;
 /*
  *  This struct defines the HD's and their types.
  */
+ // 硬盘参数类型
 struct hd_i_struct {
+	// 磁头数 每磁道扇区数 柱面数 写前欲补偿柱面号 磁头着陆区柱面号 控制字节
 	int head,sect,cyl,wpcom,lzone,ctl;
 	};
 #ifdef HD_TYPE

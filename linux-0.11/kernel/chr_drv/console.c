@@ -35,10 +35,14 @@
 /*
  * These are set up by the setup-routine at boot-time:
  */
-
+// setup程序读取并保留的系统参数表 in boot/setup.s
+// 初始光标列号
 #define ORIG_X			(*(unsigned char *)0x90000)
+// 初始光标行号
 #define ORIG_Y			(*(unsigned char *)0x90001)
+// 显示页面
 #define ORIG_VIDEO_PAGE		(*(unsigned short *)0x90004)
+// 显示模式
 #define ORIG_VIDEO_MODE		((*(unsigned short *)0x90006) & 0xff)
 #define ORIG_VIDEO_COLS 	(((*(unsigned short *)0x90006) & 0xff00) >> 8)
 #define ORIG_VIDEO_LINES	(25)
@@ -46,6 +50,7 @@
 #define ORIG_VIDEO_EGA_BX	(*(unsigned short *)0x9000a)
 #define ORIG_VIDEO_EGA_CX	(*(unsigned short *)0x9000c)
 
+// 定义显示器单色/彩色显示模式类型符号常数
 #define VIDEO_TYPE_MDA		0x10	/* Monochrome Text Display	*/
 #define VIDEO_TYPE_CGA		0x11	/* CGA Display 			*/
 #define VIDEO_TYPE_EGAM		0x20	/* EGA/VGA in Monochrome Mode	*/
@@ -54,7 +59,7 @@
 #define NPAR 16
 
 extern void keyboard_interrupt(void);
-
+// 本程序的全局变量
 static unsigned char	video_type;		/* Type of display being used	*/
 static unsigned long	video_num_columns;	/* Number of text columns	*/
 static unsigned long	video_size_row;		/* Bytes per row		*/
@@ -66,44 +71,53 @@ static unsigned short	video_port_reg;		/* Video register select port	*/
 static unsigned short	video_port_val;		/* Video register value port	*/
 static unsigned short	video_erase_char;	/* Char+Attrib to erase with	*/
 
+// 卷屏操作
 static unsigned long	origin;		/* Used for EGA/VGA fast scroll	*/
 static unsigned long	scr_end;	/* Used for EGA/VGA fast scroll	*/
-static unsigned long	pos;
-static unsigned long	x,y;
+static unsigned long	pos;		// 当前光标对应的内存位置
+static unsigned long	x,y;		// 当前光标位置
 static unsigned long	top,bottom;
 static unsigned long	state=0;
 static unsigned long	npar,par[NPAR];
 static unsigned long	ques=0;
 static unsigned char	attr=0x07;
 
-static void sysbeep(void);
+static void sysbeep(void); // 蜂鸣函数
 
 /*
  * this is what the terminal answers to a ESC-Z or csi0c
  * query (= vt100 response).
  */
-#define RESPONSE "\033[?1;2c"
+#define RESPONSE "\033[?1;2c" // ESC
 
 /* NOTE! gotoxy thinks x==video_num_columns is ok */
+// 更新当前光标位置
 static inline void gotoxy(unsigned int new_x,unsigned int new_y)
 {
 	if (new_x > video_num_columns || new_y >= video_num_lines)
 		return;
 	x=new_x;
 	y=new_y;
-	pos=origin + y*video_size_row + (x<<1);
+	pos=origin + y*video_size_row + (x<<1);	// 汇编有讲
 }
-
+// 设置滚屏起始显示内存地址
 static inline void set_origin(void)
 {
 	cli();
-	outb_p(12, video_port_reg);
+	outb_p(12, video_port_reg);  // asm/io.h 向端口写数据
+	/*
+	#define outb_p(value,port) \
+	__asm__ ("outb %%al,%%dx\n" \
+		"\tjmp 1f\n" \
+		"1:\tjmp 1f\n" \
+		"1:"::"a" (value),"d" (port))
+		*/
 	outb_p(0xff&((origin-video_mem_start)>>9), video_port_val);
 	outb_p(13, video_port_reg);
 	outb_p(0xff&((origin-video_mem_start)>>1), video_port_val);
 	sti();
 }
-
+// 向上卷动一行
 static void scrup(void)
 {
 	if (video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM)
@@ -166,7 +180,7 @@ static void scrup(void)
 			:"cx","di","si");
 	}
 }
-
+// 向下卷动一行
 static void scrdown(void)
 {
 	if (video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM)
@@ -200,7 +214,7 @@ static void scrdown(void)
 			:"ax","cx","di","si");
 	}
 }
-
+// 光标向下一行
 static void lf(void)
 {
 	if (y+1<bottom) {
@@ -210,7 +224,7 @@ static void lf(void)
 	}
 	scrup();
 }
-
+// 光标在同列向上移动一行
 static void ri(void)
 {
 	if (y>top) {
@@ -220,13 +234,14 @@ static void ri(void)
 	}
 	scrdown();
 }
-
+// 光标回到第一列？
+// 为何要 <<1
 static void cr(void)
 {
-	pos -= x<<1;
+	pos -= x<<1; // 要乘2
 	x=0;
 }
-
+// 删除前一字符
 static void del(void)
 {
 	if (x) {
@@ -235,10 +250,10 @@ static void del(void)
 		*(unsigned short *)pos = video_erase_char;
 	}
 }
-
+// 删除屏幕上与光标位置相关部分
 static void csi_J(int par)
 {
-	long count __asm__("cx");
+	long count __asm__("cx"); // 设为寄存器变量
 	long start __asm__("di");
 
 	switch (par) {

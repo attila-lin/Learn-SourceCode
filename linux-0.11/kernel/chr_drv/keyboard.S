@@ -10,7 +10,7 @@
  *		Marc Corsini for the French keyboard
  */
 
-#include <linux/config.h>
+#include <linux/config.h> // 内核配置头文件
 
 .text
 .globl _keyboard_interrupt
@@ -18,12 +18,13 @@
 /*
  * these are for the keyboard read functions
  */
+// 键盘缓冲区的长度
 size	= 1024		/* must be a power of two ! And MUST be the same
 			   as in tty_io.c !!!! */
-head = 4
-tail = 8
-proc_list = 12
-buf = 16
+head = 4	// 缓冲区头指针字段在tty_queue结构的偏移
+tail = 8	// 缓冲区尾指针字段偏移
+proc_list = 12	// 等待该缓冲队列的进程字段偏移
+buf = 16		// 缓冲区字段偏移
 
 mode:	.byte 0		/* caps, alt, ctrl and shift mode */
 leds:	.byte 2		/* num-lock, caps, scroll-lock mode (nom-lock on) */
@@ -34,6 +35,8 @@ e0:	.byte 0
  *  keyboard scan-code and converts it into the appropriate
  *  ascii character(s).
  */
+// 键盘中断处理程序入口点
+// 键盘控制器接收到用户的一个按键操作，会发送一个键盘中断请求信号IRQ1
 _keyboard_interrupt:
 	pushl %eax
 	pushl %ebx

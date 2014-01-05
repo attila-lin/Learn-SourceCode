@@ -24,7 +24,7 @@ register int __res __asm__("ax"); \
 __asm__("bt %2,%3;setb %%al":"=a" (__res):"a" (0),"r" (bitnr),"m" (*(addr))); \
 __res; })
 
-struct super_block super_block[NR_SUPER];
+struct super_block super_block[NR_SUPER]; // 
 /* this is initialized in init/main.c */
 int ROOT_DEV = 0;
 
