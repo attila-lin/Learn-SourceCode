@@ -141,11 +141,12 @@ repeat:
 	req->next = NULL;
 	add_request(major+blk_dev,req);
 }
-
+// 将高速缓冲区内容写入设备
 void ll_rw_block(int rw, struct buffer_head * bh)
 {
 	unsigned int major;
-
+	
+// include/linux/fs.h:#define MAJOR(a) (((unsigned)(a))>>8)
 	if ((major=MAJOR(bh->b_dev)) >= NR_BLK_DEV ||
 	!(blk_dev[major].request_fn)) {
 		printk("Trying to read nonexistent block-device\n\r");

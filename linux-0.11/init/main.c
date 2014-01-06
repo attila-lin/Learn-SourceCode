@@ -173,7 +173,7 @@ void main(void)		/* This really IS void, no error here. */
 	tty_init();
 	time_init();
 	sched_init();								// kernel/sched.c
-	buffer_init(buffer_memory_end);
+	buffer_init(buffer_memory_end);				// fs/buffer.c
 	hd_init();
 	floppy_init();
 	sti();

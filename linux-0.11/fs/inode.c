@@ -56,6 +56,7 @@ void invalidate_inodes(int dev)
 	}
 }
 
+// 把内存i节点表中所有修改过的i节点写入高速缓冲
 void sync_inodes(void)
 {
 	int i;
@@ -314,7 +315,7 @@ static void read_inode(struct m_inode * inode)
 static void write_inode(struct m_inode * inode)
 {
 	struct super_block * sb;
-	struct buffer_head * bh;
+	struct buffer_head * bh; // 高速缓存
 	int block;
 
 	lock_inode(inode);

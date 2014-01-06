@@ -66,17 +66,29 @@ __asm__("incl %0\n\tandl $4095,%0"::"m" (head))
 typedef char buffer_block[BLOCK_SIZE];
 
 struct buffer_head {
+	// 指向该缓冲块中数据区（1024字节）的指针
 	char * b_data;			/* pointer to data block (1024 bytes) */
+	// 块号
 	unsigned long b_blocknr;	/* block number */
+	// 数据源的设备号
 	unsigned short b_dev;		/* device (0 = free) */
+	// 更新标志
 	unsigned char b_uptodate;
+	// 修改标志
 	unsigned char b_dirt;		/* 0-clean,1-dirty */
+	// 使用该块的用户数
 	unsigned char b_count;		/* users using this block */
+	// 锁
 	unsigned char b_lock;		/* 0 - ok, 1 -locked */
+	// 指向等待该缓冲区解锁的任务
 	struct task_struct * b_wait;
+	// hash队列上前一块
 	struct buffer_head * b_prev;
+	// hash队列上后一块
 	struct buffer_head * b_next;
+	// 空闲表上前一块
 	struct buffer_head * b_prev_free;
+	// 空闲表上后一块
 	struct buffer_head * b_next_free;
 };
 

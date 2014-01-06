@@ -17,9 +17,18 @@ Learn Source Code
 	+ sys.c
 	+ printk.c
 	+ panic.c
-+ 部分include中.h
++ fs
+    + buffer.c
++ 部分include中.h文件
 
 To be continued
+
+### TODO
+
++ 阅读[POSIX](http://pubs.opengroup.org/onlinepubs/9699919799/)，了解一下
+
++ 阅读注释文件系统，内存管理部分
+
 
 ### Blog
 
@@ -29,6 +38,8 @@ To be continued
 
 + Linux内核完全注释
 + Linux内核设计的艺术
+
+
 
 ## 2. 阅读glibc
 已阅读函数：
@@ -46,3 +57,5 @@ shell指令
 man
 
 ## 4. 阅读lua源码
+
+
