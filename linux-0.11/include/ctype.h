@@ -1,8 +1,8 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H
 
-#define _U	0x01	/* upper */
-#define _L	0x02	/* lower */
+#define _U	0x01	/* upper */	// 该比特位于大写字符
+#define _L	0x02	/* lower */	// 小写
 #define _D	0x04	/* digit */
 #define _C	0x08	/* cntrl */
 #define _P	0x10	/* punct */
@@ -10,8 +10,8 @@
 #define _X	0x40	/* hex digit */
 #define _SP	0x80	/* hard space (0x20) */
 
-extern unsigned char _ctype[];
-extern char _ctmp;
+extern unsigned char _ctype[];	// 字符特性数组表，对应上面的属性
+extern char _ctmp;				// 临时字符变量 ctype.c
 
 #define isalnum(c) ((_ctype+1)[c]&(_U|_L|_D))
 #define isalpha(c) ((_ctype+1)[c]&(_U|_L))

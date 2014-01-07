@@ -28,8 +28,9 @@
 #include <linux/head.h>
 #include <linux/kernel.h>
 
-volatile void do_exit(long code);
+volatile void do_exit(long code);	// 进程退出处理函数，在kernel/exit.c
 
+// 显示内存已经用完出错
 static inline volatile void oom(void)
 {
 	printk("out of memory\n\r");
@@ -40,31 +41,37 @@ static inline volatile void oom(void)
 __asm__("movl %%eax,%%cr3"::"a" (0))
 
 /* these are not to be changed without changing head.s etc */
-#define LOW_MEM 0x100000
-#define PAGING_MEMORY (15*1024*1024)
-#define PAGING_PAGES (PAGING_MEMORY>>12)
-#define MAP_NR(addr) (((addr)-LOW_MEM)>>12)
-#define USED 100
+// 默认最大内存容量16MB
+#define LOW_MEM 0x100000	// 内存低端 1MB
+#define PAGING_MEMORY (15*1024*1024)	// 分页内存15MB 主内存最多15MB
+#define PAGING_PAGES (PAGING_MEMORY>>12)	// 分页后的物理内存页面数
+#define MAP_NR(addr) (((addr)-LOW_MEM)>>12)	// 指定内存地址映射为页号
+#define USED 100							// 页面被占用标志
 
 #define CODE_SPACE(addr) ((((addr)+4095)&~4095) < \
 current->start_code + current->end_code)
 
-static long HIGH_MEMORY = 0;
+static long HIGH_MEMORY = 0;	// 全局变量，存放实际物理内存最高端地址
 
+// 从from复制一页内存到to
 #define copy_page(from,to) \
 __asm__("cld ; rep ; movsl"::"S" (from),"D" (to),"c" (1024):"cx","di","si")
 
+// 物理内存映射字节图
+// 不能用做主内存页面的位置被设置为USED
+// 到mem_init()
 static unsigned char mem_map [ PAGING_PAGES ] = {0,};
 
 /*
  * Get physical address of first (actually last :-) free page, and mark it
  * used. If no free pages left, return 0.
  */
+ // 获取首个空闲页面（实际上是最后一个），标记为已使用，没有就返回0
 unsigned long get_free_page(void)
 {
 register unsigned long __res asm("ax");
 
-__asm__("std ; repne ; scasb\n\t"
+__asm__("std ; repne ; scasb\n\t"	// 置方向位
 	"jne 1f\n\t"
 	"movb $1,1(%%edi)\n\t"
 	"sall $12,%%ecx\n\t"
@@ -79,17 +86,19 @@ __asm__("std ; repne ; scasb\n\t"
 	:"0" (0),"i" (LOW_MEM),"c" (PAGING_PAGES),
 	"D" (mem_map+PAGING_PAGES-1)
 	:"di","cx","dx");
-return __res;
+return __res;	// 返回
 }
 
 /*
  * Free a page of memory at physical address 'addr'. Used by
  * 'free_page_tables()'
  */
+ // 释放物理地址'addr'处的一页内存，用于 free_page_tables()
 void free_page(unsigned long addr)
 {
+	// 地址合理性
 	if (addr < LOW_MEM) return;
-	if (addr >= HIGH_MEMORY)
+	if (addr >= HIGH_MEMORY)	// 超出最高端
 		panic("trying to free nonexistent page");
 	addr -= LOW_MEM;
 	addr >>= 12;
@@ -102,31 +111,37 @@ void free_page(unsigned long addr)
  * This function frees a continuos block of page tables, as needed
  * by 'exit()'. As does copy_page_tables(), this handles only 4Mb blocks.
  */
+ // 释放对应内存页表指定内存块并置表项空闲
 int free_page_tables(unsigned long from,unsigned long size)
 {
 	unsigned long *pg_table;
 	unsigned long * dir, nr;
-
-	if (from & 0x3fffff)
+	// 检测参数from边界
+	if (from & 0x3fffff)	// 是否在4MB边界处
 		panic("free_page_tables called with wrong alignment");
-	if (!from)
+	if (!from)	// 试图释放内核和缓冲所占空间
 		panic("Trying to free up swapper memory space");
+	// 计算size所给出的长度所占的页目录项目（4MB的进程整数倍）也就是所占页表数
+	// 1个页表可管理4MB物理内存
 	size = (size + 0x3fffff) >> 22;
 	dir = (unsigned long *) ((from>>20) & 0xffc); /* _pg_dir = 0 */
-	for ( ; size-->0 ; dir++) {
+	// size是释放的页表个数，就是目录项数
+	// dir是起始目录项无效
+	// 开始循环操作页目录项，依次释放每个页表项
+	for ( ; size-->0 ; dir++) { // size-->0 ？？？？ 
 		if (!(1 & *dir))
 			continue;
 		pg_table = (unsigned long *) (0xfffff000 & *dir);
 		for (nr=0 ; nr<1024 ; nr++) {
-			if (1 & *pg_table)
+			if (1 & *pg_table)	// 该项有效，释放
 				free_page(0xfffff000 & *pg_table);
-			*pg_table = 0;
-			pg_table++;
+			*pg_table = 0;	// 内容清零
+			pg_table++;		// 指向页表中下一项
 		}
-		free_page(0xfffff000 & *dir);
-		*dir = 0;
+		free_page(0xfffff000 & *dir);	// 释放该页表所占内存页面
+		*dir = 0;	// 对应页表的目录项清零
 	}
-	invalidate();
+	invalidate();	// 
 	return 0;
 }
 
@@ -147,6 +162,7 @@ int free_page_tables(unsigned long from,unsigned long size)
  * 1 Mb-range, so the pages can be shared with the kernel. Thus the
  * special case for nr=xxxx.
  */
+ // 复制页目录表项和页表项
 int copy_page_tables(unsigned long from,unsigned long to,long size)
 {
 	unsigned long * from_page_table;
@@ -154,12 +170,14 @@ int copy_page_tables(unsigned long from,unsigned long to,long size)
 	unsigned long this_page;
 	unsigned long * from_dir, * to_dir;
 	unsigned long nr;
-
+	// 检测有效性
+	// 在4MB内存边界地址上
 	if ((from&0x3fffff) || (to&0x3fffff))
 		panic("copy_page_tables called with wrong alignment");
 	from_dir = (unsigned long *) ((from>>20) & 0xffc); /* _pg_dir = 0 */
 	to_dir = (unsigned long *) ((to>>20) & 0xffc);
 	size = ((unsigned) (size+0x3fffff)) >> 22;
+	// 得到源起始目录项指针from_dir
 	for( ; size-->0 ; from_dir++,to_dir++) {
 		if (1 & *to_dir)
 			panic("copy_page_tables: already exist");
@@ -194,6 +212,7 @@ int copy_page_tables(unsigned long from,unsigned long to,long size)
  * out of memory (either when trying to access page-table or
  * page.)
  */
+ // 将物理内存页面映射到线性地址空间指定处
 unsigned long put_page(unsigned long page,unsigned long address)
 {
 	unsigned long tmp, *page_table;
@@ -217,7 +236,7 @@ unsigned long put_page(unsigned long page,unsigned long address)
 /* no need for invalidate */
 	return page;
 }
-
+// 取消写保护页面函数，用于页异常中断过程中保护异常的处理
 void un_wp_page(unsigned long * table_entry)
 {
 	unsigned long old_page,new_page;
@@ -395,19 +414,20 @@ void do_no_page(unsigned long error_code,unsigned long address)
 	free_page(page);
 	oom();
 }
-
+// 初始化
 void mem_init(long start_mem, long end_mem)
 {
 	int i;
 
-	HIGH_MEMORY = end_mem;
+	HIGH_MEMORY = end_mem;	// 设置内存最高端
 	for (i=0 ; i<PAGING_PAGES ; i++)
 		mem_map[i] = USED;
-	i = MAP_NR(start_mem);
+	// 然后计算主内存区起始内存 start_mem 处页面对应内存映射字节数组中项号i和主内存区
+	i = MAP_NR(start_mem);	// 主内存区起始位置处页面号
 	end_mem -= start_mem;
-	end_mem >>= 12;
-	while (end_mem-->0)
-		mem_map[i++]=0;
+	end_mem >>= 12;			// 主页面数
+	while (end_mem-->0)			//原来是 end_mem-- > 0
+		mem_map[i++]=0;		// 主内存区页面对应字节值清零
 }
 
 void calc_mem(void)

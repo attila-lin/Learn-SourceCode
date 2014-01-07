@@ -13,17 +13,24 @@ struct exec {
   unsigned a_trsize;		/* length of relocation info for text, in bytes */
   unsigned a_drsize;		/* length of relocation info for data, in bytes */
 };
-
+// 用于取上述exec结构中的魔数
 #ifndef N_MAGIC
 #define N_MAGIC(exec) ((exec).a_magic)
 #endif
+// 魔数是八进制，位于执行程序头结构的开始处。
+// 原本是一条跳转指令，表示跳转到随后7个字后的代码开始处
+// 这样加载可以把执行文件放入内存后直接跳转到指令开始处运行
+// 现在没有了，作为识别文件类型的标志（魔数）保留下来
 
+// old magic
 #ifndef OMAGIC
 /* Code indicating object file or impure executable.  */
 #define OMAGIC 0407
 /* Code indicating pure executable.  */
+// 可执行文件的代号
 #define NMAGIC 0410
 /* Code indicating demand-paged executable.  */
+// 需要分页处理的可执行文件
 #define ZMAGIC 0413
 #endif /* not OMAGIC */
 
