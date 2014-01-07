@@ -36,6 +36,8 @@ extern int sys_close(int fd);
  * and envelope for the new program. 32 should suffice, this gives
  * a maximum env+arg of 128kB !
  */
+ // 新程序分配的给参数和环境变量使用的最大内存页数
+ // 32页
 #define MAX_ARG_PAGES 32
 
 /*
@@ -43,11 +45,19 @@ extern int sys_close(int fd);
  * memory and creates the pointer tables from them, and puts their
  * addresses on the "stack", returning the new stack pointer value.
  */
+ // 在新任务栈中创建参数和环境变量指针表
+ // 参数： 
+ // 	p 		数据段中参数和环境信息偏移指针
+ //		argc 	参数个数
+ // 	envc	环境变量个数
+ // 返回： 		
+ //				栈指针值
 static unsigned long * create_tables(char * p,int argc,int envc)
 {
 	unsigned long *argv,*envp;
 	unsigned long * sp;
-
+// 栈指针是四字节为边界进行寻址的
+// 先吧sp向下移动，在栈中空出环境变量指针占用空间
 	sp = (unsigned long *) (0xfffffffc & (unsigned long) p);
 	sp -= envc+1;
 	envp = sp;
@@ -56,6 +66,7 @@ static unsigned long * create_tables(char * p,int argc,int envc)
 	put_fs_long((unsigned long)envp,--sp);
 	put_fs_long((unsigned long)argv,--sp);
 	put_fs_long((unsigned long)argc,--sp);
+// 将命令行各位参数指针和环境变量各指针放入中间空出来的相应地方，最后放一个null指针
 	while (argc-->0) {
 		put_fs_long((unsigned long) p,argv++);
 		while (get_fs_byte(p++)) /* nothing */ ;
@@ -65,13 +76,19 @@ static unsigned long * create_tables(char * p,int argc,int envc)
 		put_fs_long((unsigned long) p,envp++);
 		while (get_fs_byte(p++)) /* nothing */ ;
 	}
-	put_fs_long(0,envp);
-	return sp;
+	put_fs_long(0,envp); // include/asm/segment.h:extern inline void put_fs_long(unsigned long val,unsigned long * addr)
+	// extern inline void put_fs_long(unsigned long val,unsigned long * addr)
+	// {
+	//	__asm__ ("movl %0,%%fs:%1"::"r" (val),"m" (*addr));
+	// }
+	return sp;	// 返回当前新栈指针
 }
 
 /*
  * count() counts the number of arguments/envelopes
  */
+ // 计算命令行参数/环境变量个数
+ // 参见kernel/sched.c
 static int count(char ** argv)
 {
 	int i=0;

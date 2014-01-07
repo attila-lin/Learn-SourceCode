@@ -5,6 +5,8 @@
  */
 
 /* bitmap.c contains the code that handles the inode and block bitmaps */
+// 用于对文件系统的i节点位图和逻辑块位图进行占用和释放操作
+
 #include <string.h>
 
 #include <linux/sched.h>

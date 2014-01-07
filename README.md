@@ -46,6 +46,8 @@ To be continued
 + strlen
 + strcpy
 
+结合《代码优化：有效使用内存》《C标准库》看
+
 ## 3. 阅读coreutils源码
 shell指令
 已读
